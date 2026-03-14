@@ -1,6 +1,5 @@
 package com.example.Bitcoin.service;
 
-
 import jakarta.annotation.PostConstruct;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -8,12 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.net.URI;
 
-import java.net.URI;
-
 @Service
-public class CoinbaseStreamService {
-
-    private final String COINBASE_URL = "wss://ws-feed.exchange.coinbase.com";
+public class KrakenStreamService {
+    private final String KRAKEN_URL = "wss://ws.kraken.com";
 
     @Autowired
     private MarketDataProducer producer;
@@ -21,34 +17,29 @@ public class CoinbaseStreamService {
     @PostConstruct
     public void connect() {
         try {
-            WebSocketClient client = new WebSocketClient(new URI(COINBASE_URL)) {
-
+            WebSocketClient client = new WebSocketClient(new URI(KRAKEN_URL)) {
                 @Override
                 public void onOpen(ServerHandshake handshakedata) {
-                    System.out.println("✅ Connected to Coinbase WebSocket");
-
-                    // Top Coins list (Coinbase Format)
+                    System.out.println("✅ Connected to Kraken WebSocket");
+                    // Kraken uses slash (/) and USD
                     String subscribeMessage = "{" +
-                            "\"type\": \"subscribe\"," +
-                            "\"product_ids\": [" +
-                            "\"BTC-USD\", \"ETH-USD\", \"SOL-USD\", \"BNB-USD\", \"XRP-USD\"," +
-                            "\"ADA-USD\", \"DOGE-USD\", \"TRX-USD\", \"DOT-USD\", \"LINK-USD\"," +
-                            "\"AVAX-USD\", \"SHIB-USD\", \"MATIC-USD\", \"LTC-USD\", \"NEAR-USD\"" +
+                            "\"event\":\"subscribe\"," +
+                            "\"pair\":[" +
+                            "\"BTC/USD\",\"ETH/USD\",\"SOL/USD\",\"BNB/USD\",\"XRP/USD\"," +
+                            "\"ADA/USD\",\"DOGE/USD\",\"TRX/USD\",\"DOT/USD\",\"LINK/USD\"," +
+                            "\"AVAX/USD\",\"SHIB/USD\",\"MATIC/USD\",\"LTC/USD\",\"NEAR/USD\"" +
                             "]," +
-                            "\"channels\": [\"ticker\"]" +
+                            "\"subscription\":{\"name\":\"ticker\"}" +
                             "}";
-
                     send(subscribeMessage);
                 }
-
                 @Override
                 public void onMessage(String message) {
-                    producer.sendToStream("Coinbase", message);
+                    producer.sendToStream("Kraken", message);
                 }
-
                 @Override
                 public void onClose(int code, String reason, boolean remote) {
-                    System.out.println("❌ Coinbase Connection Closed");
+                    System.out.println("❌ Kraken Connection Closed");
                 }
 
                 @Override
@@ -57,8 +48,6 @@ public class CoinbaseStreamService {
                 }
             };
             client.connect();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 }
