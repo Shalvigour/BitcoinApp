@@ -22,36 +22,43 @@ public class BybitStreamService {
     public void connect() {
         try {
             WebSocketClient client = new WebSocketClient(new URI(BYBIT_URL)) {
+
                 @Override
                 public void onOpen(ServerHandshake handshakedata) {
                     System.out.println("✅ Connected to Bybit WebSocket");
-                    String subscribeMessage = "{" +
-                            "\"op\": \"subscribe\"," +
-                            "\"args\": [" +
-                            "\"ticker.BTCUSDT\",\"ticker.ETHUSDT\",\"ticker.SOLUSDT\",\"ticker.BNBUSDT\"," +
-                            "\"ticker.XRPUSDT\",\"ticker.ADAUSDT\",\"ticker.DOGEUSDT\",\"ticker.TRXUSDT\"," +
-                            "\"ticker.DOTUSDT\",\"ticker.LINKUSDT\",\"ticker.AVAXUSDT\",\"ticker.SHIBUSDT\"," +
-                            "\"ticker.MATICUSDT\",\"ticker.LTCUSDT\",\"ticker.NEARUSDT\"" +
-                            "]" +
-                            "}";
-                    send(subscribeMessage);
 
-                    new Timer().scheduleAtFixedRate(new TimerTask() {
-                        @Override
-                        public void run() {
-                            if (isOpen()) {
-                                send("{\"op\":\"ping\"}");
-                            }
-                        }
-                    }, 20000, 20000);
+                    String subMsg1 = "{\"op\": \"subscribe\", \"args\": [" +
+                            "\"tickers.BTCUSDT\"," +
+                            "\"tickers.ETHUSDT\"," +
+                            "\"tickers.SOLUSDT\"," +
+                            "\"tickers.BNBUSDT\"," +
+                            "\"tickers.XRPUSDT\"," +
+                            "\"tickers.ADAUSDT\"," +
+                            "\"tickers.DOGEUSDT\"," +
+                            "\"tickers.TRXUSDT\"," +
+                            "\"tickers.DOTUSDT\"," +
+                            "\"tickers.LINKUSDT\"" +
+                            "]}";
+
+                    // ✅ Batch 2 — baaki 5 coins
+                    String subMsg2 = "{\"op\": \"subscribe\", \"args\": [" +
+                            "\"tickers.AVAXUSDT\"," +
+                            "\"tickers.SHIBUSDT\"," +
+                            "\"tickers.MATICUSDT\"," +
+                            "\"tickers.LTCUSDT\"," +
+                            "\"tickers.NEARUSDT\"" +
+                            "]}";
+
+                    send(subMsg1);
+                    send(subMsg2);
                 }
+
                 @Override
                 public void onMessage(String message) {
-                    if (message.contains("ret_msg\":\"pong\"") || message.contains("success\":true")) {
-                        return;
-                    }
                     producer.sendToStream("Bybit", message);
                 }
+
+
                 @Override
                 public void onClose(int code, String reason, boolean remote) {
                     System.out.println("❌ Bybit Connection Closed");

@@ -23,7 +23,9 @@ public class MarketDataProducer {
 
             String symbol = "";
             String price = "";
-
+            if (price == null || price.isEmpty() || symbol == null || symbol.isEmpty()) {
+                return; // Don't push to Redis if data is missing
+            }
             switch (exchangeName) {
                 case "Binance":
                     symbol = jsonNode.has("data") ? jsonNode.get("data").get("s").asText() : jsonNode.get("s").asText();
@@ -41,19 +43,26 @@ public class MarketDataProducer {
                     }
                     break;
                 case "Bybit":
-                    // Bybit v5 sends data in a 'data' object
-                    if (jsonNode.has("data")) {
-                        symbol = jsonNode.get("data").get("s").asText();
+                    // Bybit sends a "topic" and "data" object
+                    if (jsonNode.has("data") && jsonNode.get("data").has("lastPrice")) {
+                        // Bybit data is an object, not an array in V5 Tickers
                         price = jsonNode.get("data").get("lastPrice").asText();
+                        symbol = jsonNode.get("data").get("symbol").asText();
+                    } else {
+                        // Agar lastPrice nahi hai (matlab ye welcome message hai), toh skip karo
+                        return;
                     }
                     break;
-
-                case "OKX":
-                    // OKX sends data in a 'data' array
-                    if (jsonNode.has("data")) {
-                        symbol = jsonNode.get("data").get(0).get("instId").asText();
-                        price = jsonNode.get("data").get(0).get("last").asText();
-                    }
+//                case "OKX":
+//                    // OKX sends data in a 'data' array
+//                    if (jsonNode.has("data")) {
+//                        symbol = jsonNode.get("data").get(0).get("instId").asText();
+//                        price = jsonNode.get("data").get(0).get("last").asText();
+//                    }
+//                    break;
+                case "WazirX":
+                    symbol = jsonNode.get("symbol").asText();
+                    price  = jsonNode.get("price").asText();
                     break;
             }
             // Symbols ko normalize karna: BTCUSDT aur BTC-USD dono ban jayenge BTC
