@@ -75,8 +75,8 @@ public class MarketDataConsumer implements StreamListener<String, MapRecord<Stri
         double netProfit = (sellPrice - buyPrice) - totalFees;
         double profitPercentage = (netProfit / buyPrice) * 100;
 
-        // Hum sirf tab save karenge jab profit 0.05% se zyada ho (taaki junk data na bhare)
-        if (profitPercentage > 0.05) {
+        // Temporarily set to > -5.0 to populate dashboard feed with all active price feeds
+        if (profitPercentage > -5.0) {
             saveAndPushOpportunity(coin, minEx, maxEx, buyPrice, sellPrice, netProfit, profitPercentage);
         }
     }
@@ -84,7 +84,12 @@ public class MarketDataConsumer implements StreamListener<String, MapRecord<Stri
     private void saveAndPushOpportunity(String coin, String buyEx, String sellEx, double bPrice, double sPrice, double profit, double percent) {
         ArbitrageOpportunity opportunity = new ArbitrageOpportunity();
         opportunity.setCoin(coin);
-        // ... set other fields same as yours ...
+        opportunity.setBuyExchange(buyEx);
+        opportunity.setSellExchange(sellEx);
+        opportunity.setBuyPrice(bPrice);
+        opportunity.setSellPrice(sPrice);
+        opportunity.setNetProfit(profit);
+        opportunity.setProfitPercentage(percent);
         opportunity.setTimestamp(LocalDateTime.now());
 
         // 1. Save to MongoDB (Persistent History)

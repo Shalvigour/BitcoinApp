@@ -67,6 +67,23 @@ public class UserController {
         }
     }
 
-
-
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(org.springframework.security.core.Authentication authentication) {
+        try {
+            if (authentication == null) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+            String emailId = authentication.getName();
+            Optional<User> optionalUser = userService.findByUsername(emailId);
+            if (optionalUser.isPresent()) {
+                User user = optionalUser.get();
+                // We clear password before sending it to frontend for security
+                user.setPassword(null);
+                return new ResponseEntity<>(user, HttpStatus.OK);
+            }
+            return new ResponseEntity<>("User profile not found", HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to fetch profile: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

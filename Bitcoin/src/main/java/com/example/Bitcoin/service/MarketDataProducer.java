@@ -23,9 +23,6 @@ public class MarketDataProducer {
 
             String symbol = "";
             String price = "";
-            if (price == null || price.isEmpty() || symbol == null || symbol.isEmpty()) {
-                return; // Don't push to Redis if data is missing
-            }
             switch (exchangeName) {
                 case "Binance":
                     symbol = jsonNode.has("data") ? jsonNode.get("data").get("s").asText() : jsonNode.get("s").asText();
@@ -65,6 +62,9 @@ public class MarketDataProducer {
                     price  = jsonNode.get("price").asText();
                     break;
             }
+            if (price == null || price.isEmpty() || symbol == null || symbol.isEmpty()) {
+                return; // Don't push to Redis if data is missing
+            }
             // Symbols ko normalize karna: BTCUSDT aur BTC-USD dono ban jayenge BTC
             String normalizedSymbol = symbol.replace("USDT", "")
                     .replace("USD", "")
@@ -81,9 +81,7 @@ public class MarketDataProducer {
             redisTemplate.opsForStream().add("market-ticks", dataMap);
 
         } catch (Exception e) {
-            // Kabhi kabhi initial messages (like subscription confirm) mein price nahi hota
-            // Unhe skip karne ke liye ye catch block zaroori hai
-            System.out.println("Skipping non-price message from " + exchangeName);
+            // Silently skip messages that fail to parse or stream to keep console clean
         }
     }
 }
